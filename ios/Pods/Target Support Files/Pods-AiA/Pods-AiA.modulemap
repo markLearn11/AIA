@@ -1,0 +1,6 @@
+module Pods_AiA {
+  umbrella header "Pods-AiA-umbrella.h"
+
+  export *
+  module * { export * }
+}
