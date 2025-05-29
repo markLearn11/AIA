@@ -20,7 +20,7 @@ import LoadingScreen from '../screens/LoadingScreen';
 export type RootStackParamList = {
   Auth: undefined;
   Main: undefined;
-  Chat: { conversationId: string; name: string; avatar?: string; type: 'private' | 'group' };
+  Chat: { conversationId: string; name: string; avatar?: string; type: 'private' | 'group' | 'ai' };
 };
 
 export type AuthStackParamList = {

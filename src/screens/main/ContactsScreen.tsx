@@ -10,6 +10,8 @@ import {
   useColorScheme,
   Image,
   Alert,
+  ImageStyle,
+  TextStyle,
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -20,6 +22,7 @@ import { Colors } from '../../utils/colors';
 import { debounce } from '../../utils/helpers';
 import { contactsApi, chatApi, User } from '../../services/api';
 import { useRequest } from '../../hooks/useApi';
+import { AI_CONTACT } from '../../services/aiApi';
 
 const ContactsScreen = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
@@ -97,6 +100,18 @@ const ContactsScreen = () => {
   // 开始聊天
   const startChat = async (userId: string, username: string, avatar?: string) => {
     try {
+      // 处理AI联系人
+      if (userId === AI_CONTACT._id) {
+        navigation.navigate('Chat', {
+          conversationId: AI_CONTACT._id,
+          name: AI_CONTACT.username,
+          avatar: AI_CONTACT.avatar,
+          type: 'ai',
+        });
+        return;
+      }
+
+      // 处理普通用户
       const conversation = await createPrivateChat(userId);
       if (conversation) {
         navigation.navigate('Chat', {
@@ -120,6 +135,36 @@ const ContactsScreen = () => {
     return null;
   };
 
+  // 渲染AI联系人
+  const renderAiContact = () => {
+    return (
+      <TouchableOpacity
+        style={[styles.userItem, { borderBottomColor: colors.border }]}
+        onPress={() => startChat(AI_CONTACT._id, AI_CONTACT.username, AI_CONTACT.avatar)}
+      >
+        <View style={styles.avatarContainer}>
+          <Image
+            source={{ uri: AI_CONTACT.avatar }}
+            style={styles.avatar as ImageStyle}
+          />
+          {getStatusIndicator(AI_CONTACT.status)}
+        </View>
+        <View style={styles.userInfo}>
+          <Text style={[styles.username, { color: colors.text }]}>
+            {AI_CONTACT.username}
+            <View style={styles.aiLabelContainer}>
+              <Text style={styles.aiLabel}>AI</Text>
+            </View>
+          </Text>
+          <Text style={[styles.email, { color: colors.textSecondary }]} numberOfLines={1}>
+            您的个人智能助手
+          </Text>
+        </View>
+        <Icon name="chatbubble-outline" size={24} color={colors.primary} />
+      </TouchableOpacity>
+    );
+  };
+
   // 渲染用户项
   const renderItem = ({ item }: { item: User }) => {
     // 跳过当前用户
@@ -134,7 +179,7 @@ const ContactsScreen = () => {
         <View style={styles.avatarContainer}>
           <Image
             source={{ uri: item.avatar || 'https://via.placeholder.com/50' }}
-            style={styles.avatar}
+            style={styles.avatar as ImageStyle}
           />
           {getStatusIndicator(item.status)}
         </View>
@@ -176,10 +221,15 @@ const ContactsScreen = () => {
     );
   }
 
+  // 根据搜索查询过滤AI联系人
+  const shouldShowAiContact = !searchQuery || 
+    AI_CONTACT.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    'ai助手'.includes(searchQuery.toLowerCase());
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.searchContainer, { backgroundColor: colors.surface }]}>
-        <Icon name="search" size={20} color={colors.textSecondary} style={styles.searchIcon} />
+        <Icon name="search" size={20} color={colors.textSecondary} style={{ marginRight: 8 }} />
         <TextInput
           style={[styles.searchInput, { color: colors.text }]}
           placeholder="搜索用户"
@@ -199,6 +249,7 @@ const ContactsScreen = () => {
         renderItem={renderItem}
         keyExtractor={(item) => item._id}
         ListEmptyComponent={renderEmptyComponent}
+        ListHeaderComponent={shouldShowAiContact ? renderAiContact : null}
       />
     </View>
   );
@@ -248,7 +299,7 @@ const styles = StyleSheet.create({
   statusIndicator: {
     position: 'absolute',
     bottom: 2,
-    right: 2,
+    right: 14,
     width: 12,
     height: 12,
     borderRadius: 6,
@@ -260,7 +311,7 @@ const styles = StyleSheet.create({
   },
   username: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
     marginBottom: 4,
   },
   email: {
@@ -270,17 +321,25 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
-    marginTop: 100,
+    paddingVertical: 32,
   },
   emptyText: {
-    fontSize: 18,
-    fontWeight: '600',
     marginTop: 16,
-    textAlign: 'center',
+    fontSize: 16,
   },
-  online: {
-    backgroundColor: '#4CAF50',
+  aiLabelContainer: {
+    marginLeft: 8,
+    backgroundColor: '#007bff',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  aiLabel: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
 });
 

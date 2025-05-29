@@ -28,6 +28,7 @@ import { Colors } from '../../utils/colors';
 import { formatTime } from '../../utils/helpers';
 import { chatApi, Conversation } from '../../services/api';
 import { useRequest } from '../../hooks/useApi';
+import { AI_CONTACT } from '../../services/aiApi';
 
 const ConversationsScreen = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
@@ -135,6 +136,49 @@ const ConversationsScreen = () => {
     return '新消息';
   };
 
+  // 渲染AI助手会话
+  const renderAiChat = () => {
+    const lastActivity = new Date();
+    const time = formatTime(lastActivity);
+
+    return (
+      <TouchableOpacity
+        style={[styles.conversationItem, { borderBottomColor: colors.border }]}
+        onPress={() =>
+          navigation.navigate('Chat', {
+            conversationId: AI_CONTACT._id,
+            name: AI_CONTACT.username,
+            avatar: AI_CONTACT.avatar,
+            type: 'ai',
+          })
+        }
+      >
+        <Image source={{ uri: AI_CONTACT.avatar }} style={styles.avatar} />
+        <View style={styles.conversationInfo}>
+          <View style={styles.conversationHeader}>
+            <View style={styles.nameContainer}>
+              <Text style={[styles.conversationName, { color: colors.text }]} numberOfLines={1}>
+                {AI_CONTACT.username}
+              </Text>
+              <View style={styles.aiLabelContainer}>
+                <Text style={styles.aiLabel}>AI</Text>
+              </View>
+            </View>
+            <Text style={[styles.timeText, { color: colors.textSecondary }]}>{time}</Text>
+          </View>
+          <View style={styles.messagePreviewContainer}>
+            <Text
+              style={[styles.messagePreview, { color: colors.textSecondary }]}
+              numberOfLines={1}
+            >
+              随时为您提供智能对话服务
+            </Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
   // 渲染会话项
   const renderItem = ({ item }: { item: Conversation }) => {
     const { name, avatar } = getConversationInfo(item);
@@ -215,6 +259,7 @@ const ConversationsScreen = () => {
         renderItem={renderItem}
         keyExtractor={(item) => item._id}
         ListEmptyComponent={renderEmptyComponent}
+        ListHeaderComponent={renderAiChat}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -258,18 +303,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 4,
   },
+  nameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   conversationName: {
     fontSize: 16,
-    fontWeight: '600',
-    flex: 1,
+    fontWeight: 'bold',
   },
   timeText: {
     fontSize: 12,
-    marginLeft: 8,
   },
   messagePreviewContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
   },
   senderPrefix: {
     fontSize: 14,
@@ -282,18 +328,30 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
-    marginTop: 100,
+    paddingVertical: 32,
   },
   emptyText: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: 'bold',
     marginTop: 16,
   },
   emptySubText: {
     fontSize: 14,
-    textAlign: 'center',
     marginTop: 8,
+  },
+  aiLabelContainer: {
+    marginLeft: 8,
+    backgroundColor: '#007bff',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  aiLabel: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
 });
 
